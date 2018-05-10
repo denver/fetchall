@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -25,24 +26,15 @@ func main() {
 		exit("Failed to parse the provided CSV file.")
 	}
 	links := parseLines(lines)
-	fmt.Println(links)
-
 	start := time.Now()
 	ch := make(chan string)
-	for i, p := range links {
-		fmt.Printf("%d: %s\n", i+1, p.l)
-		go fetch(p.l, ch)
+	for _, url := range links {
+		// fmt.Printf("%d: %s\n", i+1, p.l)
+		go fetch(url.l, ch)
 	}
 	for range links {
 		fmt.Println(<-ch)
 	}
-	// ch := make(chan string)
-	// for _, url := range links[1:] {
-	// 	go fetch(url, ch) //start the goroutine
-	// }
-	// for range links[1:] {
-	// 	fmt.Println(<-ch)
-	// }
 	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
 }
 
@@ -68,7 +60,7 @@ func parseLines(lines [][]string) []link {
 	ret := make([]link, len(lines))
 	for i, line := range lines {
 		ret[i] = link{
-			l: line[0],
+			l: strings.TrimSpace(line[0]),
 		}
 	}
 	return ret
