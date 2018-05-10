@@ -29,7 +29,6 @@ func main() {
 	start := time.Now()
 	ch := make(chan string)
 	for _, url := range links {
-		// fmt.Printf("%d: %s\n", i+1, p.l)
 		go fetch(url.l, ch)
 	}
 	for range links {
