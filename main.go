@@ -29,12 +29,20 @@ func main() {
 
 	start := time.Now()
 	ch := make(chan string)
-	for _, url := range links[1:] {
-		go fetch(url, ch) //start the goroutine
+	for i, p := range links {
+		fmt.Printf("%d: %s\n", i+1, p.l)
+		go fetch(p.l, ch)
 	}
-	for range links[1:] {
+	for range links {
 		fmt.Println(<-ch)
 	}
+	// ch := make(chan string)
+	// for _, url := range links[1:] {
+	// 	go fetch(url, ch) //start the goroutine
+	// }
+	// for range links[1:] {
+	// 	fmt.Println(<-ch)
+	// }
 	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
 }
 
