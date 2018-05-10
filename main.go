@@ -1,40 +1,44 @@
 package main
 
 import (
+	"encoding/csv"
+	"flag"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"net/http"
 	"os"
-	"time"
 )
 
 func main() {
-	start := time.Now()
-	ch := make(chan string)
-	for _, url := range os.Args[1:] {
-		go fetch(url, ch) // start a goroutine
+	csvFilename := flag.String("csv", "default.csv", "a csv file in the format of one 'http request' per line")
+	flag.Parse()
+
+	file, err := os.Open(*csvFilename)
+	if err != nil {
+		exit(fmt.Sprintf("Failed to open the CSV file: %s\n", *csvFilename))
 	}
-	for range os.Args[1:] {
-		fmt.Println(<-ch) // receive from channel ch
+	r := csv.NewReader(file)
+	lines, err := r.ReadAll()
+	if err != nil {
+		exit("Failed to parse the provided CSV file.")
 	}
-	fmt.Printf("%.2fs elapsed\n", time.Since(start).Seconds())
+	links := parseLines(lines)
+	fmt.Println(links)
 }
 
-func fetch(url string, ch chan<- string) {
-	start := time.Now()
-	resp, err := http.Get(url)
-	if err != nil {
-		ch <- fmt.Sprint(err) // send to channel ch
-		return
+func parseLines(lines [][]string) []link {
+	ret := make([]link, len(lines))
+	for i, line := range lines {
+		ret[i] = link{
+			l: line[0],
+		}
 	}
+	return ret
+}
 
-	nbytes, err := io.Copy(ioutil.Discard, resp.Body)
-	resp.Body.Close() // don't leak resources
-	if err != nil {
-		ch <- fmt.Sprintf("while reading %s: %v", url, err)
-		return
-	}
-	secs := time.Since(start).Seconds()
-	ch <- fmt.Sprintf("%.2fs  %7d  %s", secs, nbytes, url)
+type link struct {
+	l string
+}
+
+func exit(msg string) {
+	fmt.Println(msg)
+	os.Exit(1)
 }
